@@ -89,6 +89,7 @@ class TunnelsManager {
             guard let self = self else { return }
 
             let loadedTunnelProviders = managers ?? []
+            var removedTunnels: [TunnelContainer] = []
 
             for (index, currentTunnel) in self.tunnels.enumerated().reversed() {
                 if !loadedTunnelProviders.contains(where: { $0.isEquivalentTo(currentTunnel) }) {
@@ -109,6 +110,10 @@ class TunnelsManager {
                         }
                     }
                     let tunnel = TunnelContainer(tunnel: loadedTunnelProvider)
+                    // Removed tunnel contains programmatically changed status, so we copying it to new one
+                    if let removedTunnel = removedTunnels.first(where: { $0.name == tunnel.name }), [TunnelStatus.restarting, TunnelStatus.reasserting, TunnelStatus.waiting].contains(removedTunnel.status) {
+                        tunnel.status = removedTunnel.status
+                    }
                     self.tunnels.append(tunnel)
                     self.tunnels.sort { TunnelsManager.tunnelNameIsLessThan($0.name, $1.name) }
                     self.tunnelsListDelegate?.tunnelAdded(at: self.tunnels.firstIndex(of: tunnel)!)
